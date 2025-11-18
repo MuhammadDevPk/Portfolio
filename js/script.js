@@ -375,6 +375,175 @@ const nebula2 = createNebula(0x00ffff, new THREE.Vector3(-50, -20, -180), 40);
 const nebula3 = createNebula(0xff6600, new THREE.Vector3(20, -40, -120), 35);
 scene.add(nebula1, nebula2, nebula3);
 
+
+// ========================================
+// SOLAR SYSTEM - Sun and 9 Planets
+// ========================================
+const solarSystem = new THREE.Group();
+solarSystem.position.set(-100, 50, -200);
+
+// SUN - The center of our solar system
+const sunGeometry = new THREE.SphereGeometry(15, 64, 64);
+const sunMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffd700,
+    emissive: 0xffa500,
+    emissiveIntensity: 1
+});
+const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+
+// Sun glow effect
+const sunGlowGeometry = new THREE.SphereGeometry(18, 64, 64);
+const sunGlowMaterial = new THREE.MeshBasicMaterial({
+    color: 0xffaa00,
+    transparent: true,
+    opacity: 0.3,
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide
+});
+const sunGlow = new THREE.Mesh(sunGlowGeometry, sunGlowMaterial);
+
+// Sun corona (outer glow)
+const coronaGeometry = new THREE.SphereGeometry(22, 64, 64);
+const coronaMaterial = new THREE.MeshBasicMaterial({
+    color: 0xff6600,
+    transparent: true,
+    opacity: 0.15,
+    blending: THREE.AdditiveBlending,
+    side: THREE.BackSide
+});
+const corona = new THREE.Mesh(coronaGeometry, coronaMaterial);
+
+const sunGroup = new THREE.Group();
+sunGroup.add(sun, sunGlow, corona);
+solarSystem.add(sunGroup);
+
+// Planet data: [name, size, color, orbitRadius, speed, hasRing]
+const planetData = [
+    { name: 'Mercury', size: 1.2, color: 0x8c7853, orbit: 25, speed: 0.04, ring: false },
+    { name: 'Venus', size: 2.5, color: 0xffc649, orbit: 32, speed: 0.035, ring: false },
+    { name: 'Earth', size: 2.6, color: 0x4169e1, orbit: 40, speed: 0.03, ring: false },
+    { name: 'Mars', size: 1.8, color: 0xcd5c5c, orbit: 48, speed: 0.025, ring: false },
+    { name: 'Jupiter', size: 8, color: 0xdaa520, orbit: 65, speed: 0.015, ring: false },
+    { name: 'Saturn', size: 7, color: 0xf4a460, orbit: 82, speed: 0.012, ring: true },
+    { name: 'Uranus', size: 4, color: 0x4fd0e7, orbit: 95, speed: 0.009, ring: true },
+    { name: 'Neptune', size: 4, color: 0x4169e1, orbit: 105, speed: 0.007, ring: false },
+    { name: 'Pluto', size: 0.8, color: 0xbc9574, orbit: 115, speed: 0.005, ring: false }
+];
+
+const solarPlanets = [];
+
+planetData.forEach(data => {
+    // Create planet
+    const planetGeometry = new THREE.SphereGeometry(data.size, 32, 32);
+    const planetMaterial = new THREE.MeshStandardMaterial({
+        color: data.color,
+        emissive: data.color,
+        emissiveIntensity: 0.2,
+        metalness: 0.4,
+        roughness: 0.7
+    });
+    const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+    
+    // Create orbit path (visual ring)
+    const orbitGeometry = new THREE.RingGeometry(data.orbit - 0.1, data.orbit + 0.1, 128);
+    const orbitMaterial = new THREE.MeshBasicMaterial({
+        color: 0x444444,
+        transparent: true,
+        opacity: 0.15,
+        side: THREE.DoubleSide
+    });
+    const orbitRing = new THREE.Mesh(orbitGeometry, orbitMaterial);
+    orbitRing.rotation.x = Math.PI / 2;
+    solarSystem.add(orbitRing);
+    
+    // Add rings for Saturn and Uranus
+    if (data.ring) {
+        const ringGeometry = new THREE.RingGeometry(
+            data.size * 1.5, 
+            data.size * 2.5, 
+            64
+        );
+        const ringMaterial = new THREE.MeshBasicMaterial({
+            color: data.name === 'Saturn' ? 0xc4a570 : 0x90c4e0,
+            transparent: true,
+            opacity: 0.6,
+            side: THREE.DoubleSide
+        });
+        const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+        ring.rotation.x = Math.PI / 2;
+        planet.add(ring);
+    }
+    
+    // Create planet container for orbit
+    const planetOrbit = new THREE.Group();
+    planet.position.x = data.orbit;
+    planetOrbit.add(planet);
+    solarSystem.add(planetOrbit);
+    
+    // Store reference for animation
+    solarPlanets.push({
+        orbit: planetOrbit,
+        planet: planet,
+        speed: data.speed,
+        orbitRadius: data.orbit,
+        name: data.name
+    });
+});
+
+// Add asteroid belt between Mars and Jupiter
+const asteroidBelt = new THREE.Group();
+for (let i = 0; i < 500; i++) {
+    const asteroidSize = Math.random() * 0.2 + 0.1;
+    const asteroidGeometry = new THREE.SphereGeometry(asteroidSize, 8, 8);
+    const asteroidMaterial = new THREE.MeshStandardMaterial({
+        color: 0x666666,
+        metalness: 0.5,
+        roughness: 0.9
+    });
+    const asteroid = new THREE.Mesh(asteroidGeometry, asteroidMaterial);
+    
+    const angle = Math.random() * Math.PI * 2;
+    const radius = 55 + Math.random() * 8; // Between Mars and Jupiter
+    const height = (Math.random() - 0.5) * 2;
+    
+    asteroid.position.x = Math.cos(angle) * radius;
+    asteroid.position.z = Math.sin(angle) * radius;
+    asteroid.position.y = height;
+    
+    asteroidBelt.add(asteroid);
+}
+solarSystem.add(asteroidBelt);
+
+// Add moon for Earth
+const earthPlanet = solarPlanets.find(p => p.name === 'Earth');
+if (earthPlanet) {
+    const moonGeometry = new THREE.SphereGeometry(0.6, 16, 16);
+    const moonMaterial = new THREE.MeshStandardMaterial({
+        color: 0xaaaaaa,
+        metalness: 0.2,
+        roughness: 0.9
+    });
+    const moon = new THREE.Mesh(moonGeometry, moonMaterial);
+    moon.position.x = 5;
+    earthPlanet.planet.add(moon);
+    
+    solarPlanets.push({
+        orbit: earthPlanet.planet,
+        planet: moon,
+        speed: 0.05,
+        orbitRadius: 5,
+        name: 'Moon',
+        isMoon: true
+    });
+}
+
+scene.add(solarSystem);
+
+// Add point light from the sun
+const sunLight = new THREE.PointLight(0xffd700, 3, 200);
+sunLight.position.copy(solarSystem.position);
+scene.add(sunLight);
+
 // ========================================
 // ASTRONAUT (Simple representation)
 // ========================================
@@ -545,7 +714,54 @@ function animate() {
         
         // Rotate galaxy arms slowly
         galaxyArms.rotation.y += 0.0005;
+        
+        // Animate Solar System
+        solarSystem.rotation.y += 0.0001; // Slow rotation of entire system
     
+        // Pulse the sun
+        if (sunGroup) {
+            sunGroup.rotation.y += 0.002;
+            sun.scale.set(
+                1 + Math.sin(elapsedTime * 2) * 0.05,
+                1 + Math.sin(elapsedTime * 2) * 0.05,
+                1 + Math.sin(elapsedTime * 2) * 0.05
+            );
+            sunGlow.scale.set(
+                1 + Math.sin(elapsedTime * 2) * 0.08,
+                1 + Math.sin(elapsedTime * 2) * 0.08,
+                1 + Math.sin(elapsedTime * 2) * 0.08
+            );
+            corona.scale.set(
+                1 + Math.cos(elapsedTime * 1.5) * 0.1,
+                1 + Math.cos(elapsedTime * 1.5) * 0.1,
+                1 + Math.cos(elapsedTime * 1.5) * 0.1
+            );
+        }
+        
+        // Rotate planets around the sun
+        solarPlanets.forEach(p => {
+            if (p.isMoon) {
+                // Moon orbits Earth
+                const moonAngle = elapsedTime * p.speed;
+                p.planet.position.x = Math.cos(moonAngle) * p.orbitRadius;
+                p.planet.position.z = Math.sin(moonAngle) * p.orbitRadius;
+            } else {
+                // Planets orbit the sun
+                p.orbit.rotation.y += p.speed * 0.01;
+                // Rotate planet on its axis
+                p.planet.rotation.y += 0.01;
+            }
+        });
+        
+        // Rotate asteroid belt
+        if (asteroidBelt) {
+            asteroidBelt.rotation.y += 0.0003;
+            asteroidBelt.children.forEach((asteroid, i) => {
+                asteroid.rotation.x += 0.001 * (i % 3);
+                asteroid.rotation.y += 0.001 * (i % 2);
+            });
+        }
+
     // ASTRONAUT SCROLL ANIMATION
     // Falling into black hole (0-50% scroll)
     if (scrollPercent < 0.5) {
