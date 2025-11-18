@@ -583,100 +583,333 @@ section {
 }
 
 /* ========================================
-   PROJECTS SECTION
+   PROJECTS SECTION - ENHANCED 3D CARDS
 ======================================== */
 .projects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
+    gap: 2.5rem;
+    perspective: 1500px;
 }
 
 .project-card {
-    background: var(--glass-bg);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0.02) 100%);
     border: 1px solid var(--glass-border);
-    border-radius: 20px;
+    border-radius: 25px;
     overflow: hidden;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s ease;
+    backdrop-filter: blur(15px);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    transform-style: preserve-3d;
+    box-shadow: 
+        0 10px 30px rgba(0, 0, 0, 0.4),
+        inset 0 1px 1px rgba(255, 255, 255, 0.1);
 }
 
+/* Animated border gradient on hover */
+.project-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 25px;
+    padding: 2px;
+    background: linear-gradient(45deg, 
+        var(--primary-color), 
+        var(--secondary-color), 
+        var(--accent-color),
+        var(--primary-color)
+    );
+    -webkit-mask: 
+        linear-gradient(#fff 0 0) content-box, 
+        linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    opacity: 0;
+    transition: opacity 0.5s ease;
+    animation: rotate-gradient 3s linear infinite;
+}
+
+@keyframes rotate-gradient {
+    0% { filter: hue-rotate(0deg); }
+    100% { filter: hue-rotate(360deg); }
+}
+
+.project-card:hover::before {
+    opacity: 1;
+}
+
+/* Floating animation */
+@keyframes float {
+    0%, 100% { transform: translateY(0px) rotateX(0deg); }
+    50% { transform: translateY(-10px) rotateX(2deg); }
+}
+
+.project-card {
+    animation: float 6s ease-in-out infinite;
+}
+
+.project-card:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+.project-card:nth-child(3) {
+    animation-delay: 1s;
+}
+
+/* 3D hover effect with perspective */
 .project-card:hover {
-    transform: translateY(-10px);
+    transform: translateY(-20px) rotateX(5deg) scale(1.03);
     border-color: var(--primary-color);
-    box-shadow: 0 20px 60px rgba(0, 245, 255, 0.3);
+    box-shadow: 
+        0 30px 80px rgba(0, 245, 255, 0.4),
+        0 15px 40px rgba(255, 0, 234, 0.3),
+        inset 0 2px 2px rgba(255, 255, 255, 0.2);
+    animation: none; /* Stop float on hover */
 }
 
+/* Shine effect on hover */
+.project-card::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        45deg,
+        transparent,
+        rgba(255, 255, 255, 0.03),
+        transparent
+    );
+    transform: rotate(45deg);
+    transition: all 0.6s ease;
+}
+
+.project-card:hover::after {
+    top: -100%;
+    left: 100%;
+}
+
+/* Enhanced project image with 3D depth */
 .project-image {
     height: 250px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     position: relative;
     overflow: hidden;
+    transform: translateZ(50px);
 }
 
+/* Animated gradient backgrounds for different cards */
+.project-card:nth-child(1) .project-image {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.project-card:nth-child(2) .project-image {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.project-card:nth-child(3) .project-image {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Animated particles in background */
+.project-image::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image: 
+        radial-gradient(2px 2px at 20% 30%, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(2px 2px at 60% 70%, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(1px 1px at 50% 50%, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(2px 2px at 80% 10%, rgba(255, 255, 255, 0.3), transparent);
+    background-size: 200% 200%;
+    animation: particles 15s ease-in-out infinite;
+}
+
+@keyframes particles {
+    0%, 100% { background-position: 0% 0%, 100% 100%, 50% 50%, 80% 10%; }
+    25% { background-position: 40% 20%, 80% 80%, 30% 70%, 60% 30%; }
+    50% { background-position: 60% 40%, 60% 60%, 70% 30%, 40% 50%; }
+    75% { background-position: 20% 60%, 40% 40%, 50% 70%, 80% 70%; }
+}
+
+/* Enhanced overlay with blur effect */
 .project-overlay {
     position: absolute;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 1rem;
+    gap: 1.5rem;
     opacity: 0;
-    transition: opacity 0.3s ease;
+    transition: opacity 0.4s ease, backdrop-filter 0.4s ease;
 }
 
 .project-card:hover .project-overlay {
     opacity: 1;
+    backdrop-filter: blur(5px);
 }
 
+/* 3D link buttons */
 .project-link {
-    width: 50px;
-    height: 50px;
-    background: var(--primary-color);
-    color: var(--bg-dark);
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: #fff;
     border-radius: 50%;
     display: flex;
     justify-content: center;
     align-items: center;
     text-decoration: none;
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    box-shadow: 
+        0 5px 15px rgba(0, 245, 255, 0.4),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.2);
+    transform: translateZ(0) scale(0.8);
+    opacity: 0;
+}
+
+.project-card:hover .project-link {
+    transform: translateZ(100px) scale(1);
+    opacity: 1;
+}
+
+.project-link:nth-child(1) {
+    transition-delay: 0.1s;
+}
+
+.project-link:nth-child(2) {
+    transition-delay: 0.2s;
 }
 
 .project-link:hover {
-    transform: scale(1.2);
-    background: var(--secondary-color);
+    transform: translateZ(100px) scale(1.2) rotate(360deg);
+    background: linear-gradient(135deg, var(--secondary-color), var(--accent-color));
+    box-shadow: 
+        0 10px 30px rgba(255, 0, 234, 0.6),
+        inset 0 -2px 5px rgba(0, 0, 0, 0.3);
 }
 
+/* Glowing icon effect */
+.project-link i {
+    font-size: 1.3rem;
+    filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.8));
+}
+
+/* Enhanced content section */
 .project-content {
     padding: 2rem;
+    position: relative;
+    transform: translateZ(25px);
+    z-index: 2;
 }
 
 .project-content h3 {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+    font-size: 1.6rem;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 700;
+    transition: all 0.3s ease;
+}
+
+.project-card:hover .project-content h3 {
+    transform: translateX(5px);
+    filter: drop-shadow(0 0 10px rgba(0, 245, 255, 0.6));
 }
 
 .project-content p {
     color: var(--text-gray);
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+    transition: color 0.3s ease;
 }
 
+.project-card:hover .project-content p {
+    color: #e0e0e0;
+}
+
+/* Enhanced tags with glow */
 .project-tags {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.7rem;
     flex-wrap: wrap;
 }
 
 .project-tags span {
-    padding: 0.3rem 0.8rem;
-    background: rgba(0, 245, 255, 0.1);
-    border: 1px solid rgba(0, 245, 255, 0.3);
-    border-radius: 15px;
+    padding: 0.4rem 1rem;
+    background: linear-gradient(135deg, rgba(0, 245, 255, 0.15), rgba(255, 0, 234, 0.1));
+    border: 1px solid rgba(0, 245, 255, 0.4);
+    border-radius: 20px;
     font-size: 0.85rem;
     color: var(--primary-color);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Tag shimmer effect */
+.project-tags span::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.project-card:hover .project-tags span::before {
+    left: 100%;
+}
+
+.project-tags span:hover {
+    background: linear-gradient(135deg, rgba(0, 245, 255, 0.3), rgba(255, 0, 234, 0.2));
+    border-color: var(--secondary-color);
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(0, 245, 255, 0.4);
+}
+
+/* Staggered animation on page load */
+.project-card {
+    opacity: 0;
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.project-card:nth-child(1) {
+    animation-delay: 0.2s;
+}
+
+.project-card:nth-child(2) {
+    animation-delay: 0.4s;
+}
+
+.project-card:nth-child(3) {
+    animation-delay: 0.6s;
 }
 
 /* ========================================
