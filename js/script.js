@@ -230,7 +230,7 @@ contactForm?.addEventListener('submit', async (e) => {
     } catch (error) {
         console.error('Error:', error);
         submitBtn.innerHTML = '<span>Failed</span><i class="fas fa-times"></i>';
-        alert('Oops! Something went wrong. Please try again or email me directly at wwamalok@gmail.com');
+        alert('Oops! Something went wrong. Please try again or email me directly at muhammad@codebrisk.com');
     } finally {
         // Reset button after 3 seconds
         setTimeout(() => {
