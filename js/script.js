@@ -89,6 +89,173 @@ galaxyPoints.rotation.x = Math.PI / 4;
 scene.add(galaxyPoints);
 
 // ========================================
+// REALISTIC SPIRAL GALAXY (Andromeda-style)
+// ========================================
+const realisticGalaxy = new THREE.Group();
+
+// Galaxy Core (bright center)
+const coreGeometry = new THREE.SphereGeometry(8, 32, 32);
+const coreGradient = new THREE.ShaderMaterial({
+    uniforms: {
+        time: { value: 0 }
+    },
+    vertexShader: `
+        varying vec3 vPosition;
+        void main() {
+            vPosition = position;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        varying vec3 vPosition;
+        uniform float time;
+        void main() {
+            float dist = length(vPosition) / 8.0;
+            vec3 color1 = vec3(1.0, 0.8, 0.6); // Orange
+            vec3 color2 = vec3(1.0, 0.4, 0.8); // Pink
+            vec3 color3 = vec3(0.4, 0.6, 1.0); // Blue
+            
+            vec3 color = mix(color1, color2, dist);
+            color = mix(color, color3, dist * dist);
+            
+            float alpha = 1.0 - (dist * 0.8);
+            gl_FragColor = vec4(color, alpha);
+        }
+    `,
+    transparent: true,
+    blending: THREE.AdditiveBlending
+});
+const galaxyCore = new THREE.Mesh(coreGeometry, coreGradient);
+
+// Galaxy Disk with Spiral Pattern
+const diskGeometry1 = new THREE.CircleGeometry(50, 128);
+const diskMaterial1 = new THREE.ShaderMaterial({
+    uniforms: {
+        time: { value: 0 }
+    },
+    vertexShader: `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        varying vec2 vUv;
+        uniform float time;
+        
+        float spiral(vec2 uv, float arms) {
+            vec2 centered = uv - 0.5;
+            float angle = atan(centered.y, centered.x);
+            float radius = length(centered) * 2.0;
+            
+            float spiral = sin(angle * arms - radius * 10.0 + time * 0.5);
+            return spiral;
+        }
+        
+        void main() {
+            vec2 centered = vUv - 0.5;
+            float dist = length(centered) * 2.0;
+            
+            // Create spiral arms
+            float spiralPattern = spiral(vUv, 3.0);
+            spiralPattern = smoothstep(0.0, 0.3, spiralPattern);
+            
+            // Colors
+            vec3 color1 = vec3(0.3, 0.5, 1.0); // Blue
+            vec3 color2 = vec3(1.0, 0.3, 0.7); // Pink
+            vec3 color3 = vec3(0.8, 0.6, 1.0); // Purple
+            
+            vec3 color = mix(color1, color2, dist);
+            color = mix(color, color3, spiralPattern);
+            
+            // Fade out at edges
+            float alpha = (1.0 - dist) * 0.6 * (0.5 + spiralPattern * 0.5);
+            alpha = smoothstep(0.0, 0.5, alpha);
+            
+            gl_FragColor = vec4(color, alpha);
+        }
+    `,
+    transparent: true,
+    side: THREE.DoubleSide,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+const galaxyDisk = new THREE.Mesh(diskGeometry1, diskMaterial1);
+galaxyDisk.rotation.x = -Math.PI / 2;
+
+// Additional particle layer for galaxy arms
+const armParticlesGeometry = new THREE.BufferGeometry();
+const armCount = 15000;
+const armPositions = new Float32Array(armCount * 3);
+const armColors = new Float32Array(armCount * 3);
+
+for (let i = 0; i < armCount; i++) {
+    const i3 = i * 3;
+    const radius = Math.random() * 50;
+    const angle = (Math.random() * Math.PI * 2);
+    const spiralOffset = radius * 0.3;
+    const armNumber = Math.floor(Math.random() * 3);
+    const armAngle = (armNumber * (Math.PI * 2 / 3)) + spiralOffset;
+    
+    const x = Math.cos(angle + armAngle) * radius;
+    const z = Math.sin(angle + armAngle) * radius;
+    const y = (Math.random() - 0.5) * 2 * (1 - radius / 50);
+    
+    armPositions[i3] = x;
+    armPositions[i3 + 1] = y;
+    armPositions[i3 + 2] = z;
+    
+    // Color gradient from center to edge
+    const distFactor = radius / 50;
+    const color = new THREE.Color();
+    if (distFactor < 0.3) {
+        color.setRGB(1.0, 0.9, 0.7); // Yellow center
+    } else if (distFactor < 0.6) {
+        color.setRGB(1.0, 0.4, 0.7); // Pink middle
+    } else {
+        color.setRGB(0.3, 0.5, 1.0); // Blue outer
+    }
+    
+    armColors[i3] = color.r;
+    armColors[i3 + 1] = color.g;
+    armColors[i3 + 2] = color.b;
+}
+
+armParticlesGeometry.setAttribute('position', new THREE.BufferAttribute(armPositions, 3));
+armParticlesGeometry.setAttribute('color', new THREE.BufferAttribute(armColors, 3));
+
+const armParticlesMaterial = new THREE.PointsMaterial({
+    size: 0.4,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.8,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false
+});
+
+const galaxyArms = new THREE.Points(armParticlesGeometry, armParticlesMaterial);
+
+// Outer glow
+const glowGeometry2 = new THREE.CircleGeometry(55, 64);
+const glowMaterial2 = new THREE.MeshBasicMaterial({
+    color: 0x6b4c9a,
+    transparent: true,
+    opacity: 0.2,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide
+});
+const outerGlow = new THREE.Mesh(glowGeometry2, glowMaterial2);
+outerGlow.rotation.x = -Math.PI / 2;
+
+// Assemble galaxy
+realisticGalaxy.add(galaxyCore, galaxyDisk, galaxyArms, outerGlow);
+realisticGalaxy.position.set(0, 20, -100);
+realisticGalaxy.rotation.x = Math.PI / 6;
+realisticGalaxy.rotation.y = Math.PI / 8;
+scene.add(realisticGalaxy);
+
+// ========================================
 // BLACK HOLE with Event Horizon
 // ========================================
 const blackHoleGroup = new THREE.Group();
@@ -103,25 +270,25 @@ const blackHoleMaterial = new THREE.MeshBasicMaterial({
 const blackHole = new THREE.Mesh(blackHoleGeometry, blackHoleMaterial);
 
 // Event Horizon glow
-const glowGeometry = new THREE.SphereGeometry(12, 32, 32);
-const glowMaterial = new THREE.MeshBasicMaterial({
+const glowGeometry1 = new THREE.SphereGeometry(12, 32, 32);
+const glowMaterial1 = new THREE.MeshBasicMaterial({
     color: 0xff6600,
     transparent: true,
     opacity: 0.3,
     blending: THREE.AdditiveBlending,
     side: THREE.BackSide
 });
-const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+const glow = new THREE.Mesh(glowGeometry1, glowMaterial1);
 
 // Accretion disk
-const diskGeometry = new THREE.TorusGeometry(15, 3, 16, 100);
-const diskMaterial = new THREE.MeshBasicMaterial({
+const diskGeometry2 = new THREE.TorusGeometry(15, 3, 16, 100);
+const diskMaterial2 = new THREE.MeshBasicMaterial({
     color: 0xff6600,
     transparent: true,
     opacity: 0.6,
     blending: THREE.AdditiveBlending
 });
-const accretionDisk = new THREE.Mesh(diskGeometry, diskMaterial);
+const accretionDisk = new THREE.Mesh(diskGeometry2, diskMaterial2);
 accretionDisk.rotation.x = Math.PI / 2;
 
 blackHoleGroup.add(blackHole, glow, accretionDisk);
@@ -358,6 +525,26 @@ function animate() {
         1 + Math.cos(elapsedTime * 0.7) * 0.1,
         1 + Math.cos(elapsedTime * 0.7) * 0.1
     );
+        // Animate realistic galaxy
+        realisticGalaxy.rotation.z += 0.0003;
+    
+        // Update shader time uniforms
+        if (galaxyCore.material.uniforms) {
+            galaxyCore.material.uniforms.time.value = elapsedTime;
+        }
+        if (galaxyDisk.material.uniforms) {
+            galaxyDisk.material.uniforms.time.value = elapsedTime;
+        }
+        
+        // Pulse the galaxy core
+        galaxyCore.scale.set(
+            1 + Math.sin(elapsedTime * 0.5) * 0.05,
+            1 + Math.sin(elapsedTime * 0.5) * 0.05,
+            1 + Math.sin(elapsedTime * 0.5) * 0.05
+        );
+        
+        // Rotate galaxy arms slowly
+        galaxyArms.rotation.y += 0.0005;
     
     // ASTRONAUT SCROLL ANIMATION
     // Falling into black hole (0-50% scroll)
