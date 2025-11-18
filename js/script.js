@@ -381,8 +381,8 @@ scene.add(nebula1, nebula2, nebula3);
 // ========================================
 const solarSystem = new THREE.Group();
 solarSystem.position.set(50, 0, -150); // Closer and centered
-solarSystem.scale.set(0, 0, 0); // Hidden initially
-solarSystem.visible = false; // Start hidden
+solarSystem.scale.set(1, 1, 1); // Visible by default
+solarSystem.visible = true; // Always visible
 
 // SUN - The center of our solar system
 const sunGeometry = new THREE.SphereGeometry(15, 64, 64);
@@ -476,18 +476,23 @@ planetData.forEach(data => {
         planet.add(ring);
     }
     
-    // Create planet container for orbit
-    const planetOrbit = new THREE.Group();
-    planet.position.x = data.orbit;
-    planetOrbit.add(planet);
-    solarSystem.add(planetOrbit);
+    // GIVE EACH PLANET A RANDOM STARTING ANGLE
+    const startAngle = Math.random() * Math.PI * 2;
+    
+    // Position planet in circular orbit using trigonometry
+    planet.position.x = Math.cos(startAngle) * data.orbit;
+    planet.position.z = Math.sin(startAngle) * data.orbit;
+    planet.position.y = 0;
+    
+    // Add planet directly to solar system (no orbit group needed)
+    solarSystem.add(planet);
     
     // Store reference for animation
     solarPlanets.push({
-        orbit: planetOrbit,
         planet: planet,
         speed: data.speed,
         orbitRadius: data.orbit,
+        startAngle: startAngle, // Store starting angle
         name: data.name
     });
 });
@@ -740,63 +745,46 @@ function animate() {
             );
         }
         
-        // SCROLL-BASED Solar System Animation
-        // Solar system appears at 20-30% scroll, planets orbit from 30-80% scroll
-        if (scrollPercent > 0.2 && scrollPercent < 0.8) {
-            solarSystem.visible = true;
+        
+        
+// SCROLL-BASED Solar System Animation
+// Solar system always visible, planets orbit based on scroll
+if (solarSystem.visible) {
+    // Calculate orbital progress based on scroll (0-100% = continuous orbit)
+    const orbitProgress = scrollPercent; // 0 to 1 for full page scroll
+    
+    // Rotate planets around the sun based on scroll (CIRCULAR ORBITS)
+    solarPlanets.forEach(p => {
+        if (p.isMoon) {
+            // Moon orbits Earth based on scroll
+            const moonAngle = orbitProgress * Math.PI * 2; // Full rotation
+            p.planet.position.x = Math.cos(moonAngle) * p.orbitRadius;
+            p.planet.position.z = Math.sin(moonAngle) * p.orbitRadius;
+        } else {
+            // Planets orbit the sun in circles using trigonometry
+            // Calculate current angle based on starting angle + scroll progress
+            // Speed matched to asteroid belt rotation
+            const currentAngle = p.startAngle + (orbitProgress * Math.PI * 2);
             
-            // Fade in solar system (20-30% scroll)
-            if (scrollPercent < 0.3) {
-                const fadeProgress = (scrollPercent - 0.2) * 10; // 0 to 1
-                solarSystem.scale.set(fadeProgress, fadeProgress, fadeProgress);
-            } else {
-                solarSystem.scale.set(1, 1, 1);
-            }
+            // Update position in circular orbit
+            p.planet.position.x = Math.cos(currentAngle) * p.orbitRadius;
+            p.planet.position.z = Math.sin(currentAngle) * p.orbitRadius;
+            p.planet.position.y = 0;
             
-            // Calculate orbital progress based on scroll (30-80% = full revolution)
-            const orbitProgress = Math.max(0, (scrollPercent - 0.3) / 0.5); // 0 to 1
-            
-            
-            // Rotate planets around the sun based on scroll (SLOWED DOWN)
-            solarPlanets.forEach(p => {
-                if (p.isMoon) {
-                    // Moon orbits Earth based on scroll - slower
-                    const moonAngle = orbitProgress * Math.PI * 0.5; // Much slower
-                    p.planet.position.x = Math.cos(moonAngle) * p.orbitRadius;
-                    p.planet.position.z = Math.sin(moonAngle) * p.orbitRadius;
-                } else {
-                    // Planets orbit the sun based on scroll
-                    // Inner planets (Mercury) orbit faster, outer planets (Pluto) orbit slower
-                    const planetAngle = orbitProgress * Math.PI * 2 * p.speed * 2; // Realistic speeds
-                    p.orbit.rotation.y = planetAngle;
-                    
-                    // Rotate planet on its axis - slower
-                    p.planet.rotation.y = orbitProgress * Math.PI * 1;
-                }
-            });
+            // Rotate planet on its axis
+            p.planet.rotation.y = orbitProgress * Math.PI * 4;
+        }
+    });
+}
 
-        } else if (scrollPercent <= 0.2) {
-            solarSystem.visible = false;
-            solarSystem.scale.set(0, 0, 0);
-        } else if (scrollPercent >= 0.8) {
-            // Fade out solar system after 80% scroll
-            const fadeOut = Math.max(0, 1 - (scrollPercent - 0.8) * 5);
-            solarSystem.scale.set(fadeOut, fadeOut, fadeOut);
-            if (fadeOut === 0) {
-                solarSystem.visible = false;
-            }
-        }
-        
-        
-        // Rotate asteroid belt based on scroll (SLOWED DOWN)
-        if (asteroidBelt && solarSystem.visible) {
-            const orbitProgress = Math.max(0, (scrollPercent - 0.3) / 0.5);
-            asteroidBelt.rotation.y = orbitProgress * Math.PI * 0.8; // Slower rotation
-            asteroidBelt.children.forEach((asteroid, i) => {
-                asteroid.rotation.x = orbitProgress * Math.PI * 0.3 * (i % 3);
-                asteroid.rotation.y = orbitProgress * Math.PI * 0.3 * (i % 2);
-            });
-        }
+// Rotate asteroid belt based on scroll
+if (asteroidBelt && solarSystem.visible) {
+    asteroidBelt.rotation.y = scrollPercent * Math.PI * 2;
+    asteroidBelt.children.forEach((asteroid, i) => {
+        asteroid.rotation.x = scrollPercent * Math.PI * (i % 3);
+        asteroid.rotation.y = scrollPercent * Math.PI * (i % 2);
+    });
+}
 
     // ASTRONAUT SCROLL ANIMATION
     // Falling into black hole (0-50% scroll)
