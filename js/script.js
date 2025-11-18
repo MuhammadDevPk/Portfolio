@@ -186,14 +186,58 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // ========================================
 // FORM SUBMISSION
 // ========================================
-const contactForm = document.querySelector('.contact-form');
+const contactForm = document.getElementById('contact-form');
 
-contactForm?.addEventListener('submit', (e) => {
+contactForm?.addEventListener('submit', async (e) => {
     e.preventDefault();
     
-    // Add your form submission logic here
-    alert('Thank you for your message! I will get back to you soon.');
-    contactForm.reset();
+    // Get form data
+    const formData = {
+        name: document.getElementById('name').value,
+        email: document.getElementById('email').value,
+        subject: document.getElementById('subject').value,
+        message: document.getElementById('message').value
+    };
+    
+    // Get button
+    const submitBtn = contactForm.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<span>Sending...</span><i class="fas fa-spinner fa-spin"></i>';
+    submitBtn.disabled = true;
+    
+    try {
+        const response = await fetch('/send-email', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Show success
+            submitBtn.innerHTML = '<span>Sent!</span><i class="fas fa-check"></i>';
+            alert('Thank you for your message! I will get back to you soon.');
+            contactForm.reset();
+        } else {
+            throw new Error(result.message);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        submitBtn.innerHTML = '<span>Failed</span><i class="fas fa-times"></i>';
+        alert('Oops! Something went wrong. Please try again or email me directly at wwamalok@gmail.com');
+    } finally {
+        // Reset button after 3 seconds
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 3000);
+    }
 });
 
 // ========================================
