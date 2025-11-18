@@ -380,7 +380,9 @@ scene.add(nebula1, nebula2, nebula3);
 // SOLAR SYSTEM - Sun and 9 Planets
 // ========================================
 const solarSystem = new THREE.Group();
-solarSystem.position.set(-100, 50, -200);
+solarSystem.position.set(50, 0, -150); // Closer and centered
+solarSystem.scale.set(0, 0, 0); // Hidden initially
+solarSystem.visible = false; // Start hidden
 
 // SUN - The center of our solar system
 const sunGeometry = new THREE.SphereGeometry(15, 64, 64);
@@ -715,12 +717,12 @@ function animate() {
         // Rotate galaxy arms slowly
         galaxyArms.rotation.y += 0.0005;
         
-        // Animate Solar System
-        solarSystem.rotation.y += 0.0001; // Slow rotation of entire system
     
-        // Pulse the sun
-        if (sunGroup) {
-            sunGroup.rotation.y += 0.002;
+        // Pulse the sun (still time-based for continuous animation)
+        if (sunGroup && solarSystem.visible) {
+            sunGroup.rotation.y = scrollPercent * Math.PI * 4;
+            
+            // Pulse based on time for nice effect
             sun.scale.set(
                 1 + Math.sin(elapsedTime * 2) * 0.05,
                 1 + Math.sin(elapsedTime * 2) * 0.05,
@@ -738,27 +740,61 @@ function animate() {
             );
         }
         
-        // Rotate planets around the sun
-        solarPlanets.forEach(p => {
-            if (p.isMoon) {
-                // Moon orbits Earth
-                const moonAngle = elapsedTime * p.speed;
-                p.planet.position.x = Math.cos(moonAngle) * p.orbitRadius;
-                p.planet.position.z = Math.sin(moonAngle) * p.orbitRadius;
+        // SCROLL-BASED Solar System Animation
+        // Solar system appears at 20-30% scroll, planets orbit from 30-80% scroll
+        if (scrollPercent > 0.2 && scrollPercent < 0.8) {
+            solarSystem.visible = true;
+            
+            // Fade in solar system (20-30% scroll)
+            if (scrollPercent < 0.3) {
+                const fadeProgress = (scrollPercent - 0.2) * 10; // 0 to 1
+                solarSystem.scale.set(fadeProgress, fadeProgress, fadeProgress);
             } else {
-                // Planets orbit the sun
-                p.orbit.rotation.y += p.speed * 0.01;
-                // Rotate planet on its axis
-                p.planet.rotation.y += 0.01;
+                solarSystem.scale.set(1, 1, 1);
             }
-        });
+            
+            // Calculate orbital progress based on scroll (30-80% = full revolution)
+            const orbitProgress = Math.max(0, (scrollPercent - 0.3) / 0.5); // 0 to 1
+            
+            
+            // Rotate planets around the sun based on scroll (SLOWED DOWN)
+            solarPlanets.forEach(p => {
+                if (p.isMoon) {
+                    // Moon orbits Earth based on scroll - slower
+                    const moonAngle = orbitProgress * Math.PI * 0.5; // Much slower
+                    p.planet.position.x = Math.cos(moonAngle) * p.orbitRadius;
+                    p.planet.position.z = Math.sin(moonAngle) * p.orbitRadius;
+                } else {
+                    // Planets orbit the sun based on scroll
+                    // Inner planets (Mercury) orbit faster, outer planets (Pluto) orbit slower
+                    const planetAngle = orbitProgress * Math.PI * 2 * p.speed * 2; // Realistic speeds
+                    p.orbit.rotation.y = planetAngle;
+                    
+                    // Rotate planet on its axis - slower
+                    p.planet.rotation.y = orbitProgress * Math.PI * 1;
+                }
+            });
+
+        } else if (scrollPercent <= 0.2) {
+            solarSystem.visible = false;
+            solarSystem.scale.set(0, 0, 0);
+        } else if (scrollPercent >= 0.8) {
+            // Fade out solar system after 80% scroll
+            const fadeOut = Math.max(0, 1 - (scrollPercent - 0.8) * 5);
+            solarSystem.scale.set(fadeOut, fadeOut, fadeOut);
+            if (fadeOut === 0) {
+                solarSystem.visible = false;
+            }
+        }
         
-        // Rotate asteroid belt
-        if (asteroidBelt) {
-            asteroidBelt.rotation.y += 0.0003;
+        
+        // Rotate asteroid belt based on scroll (SLOWED DOWN)
+        if (asteroidBelt && solarSystem.visible) {
+            const orbitProgress = Math.max(0, (scrollPercent - 0.3) / 0.5);
+            asteroidBelt.rotation.y = orbitProgress * Math.PI * 0.8; // Slower rotation
             asteroidBelt.children.forEach((asteroid, i) => {
-                asteroid.rotation.x += 0.001 * (i % 3);
-                asteroid.rotation.y += 0.001 * (i % 2);
+                asteroid.rotation.x = orbitProgress * Math.PI * 0.3 * (i % 3);
+                asteroid.rotation.y = orbitProgress * Math.PI * 0.3 * (i % 2);
             });
         }
 
