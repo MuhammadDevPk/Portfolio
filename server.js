@@ -22,10 +22,10 @@ app.use(express.static(__dirname, {
 
 // Configure nodemailer
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // or 'outlook', 'yahoo', etc.
+  service: 'gmail',
   auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com', // Your email
-    pass: process.env.EMAIL_PASS || 'your-app-password'     // Your app password
+    user: process.env.EMAIL_USER || 'your-email@gmail.com',
+    pass: process.env.EMAIL_PASS || 'your-app-password'
   }
 });
 
@@ -35,7 +35,7 @@ app.post('/send-email', async (req, res) => {
 
   const mailOptions = {
     from: email,
-    to: 'wwamalok@gmail.com',
+    to: 'muhammad@codebrisk.com',
     subject: `Portfolio Contact: ${subject}`,
     html: `
       <h2>New Contact Form Submission</h2>
@@ -62,6 +62,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
+// FIXED: Listen on 0.0.0.0 for Render
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Portfolio server running on port ${PORT}`);
 });
