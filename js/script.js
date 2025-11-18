@@ -184,6 +184,27 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // ========================================
+// SCROLL INDICATOR CLICK
+// ========================================
+const scrollIndicator = document.querySelector('.scroll-indicator');
+
+scrollIndicator?.addEventListener('click', () => {
+    const aboutSection = document.querySelector('#about');
+    if (aboutSection) {
+        aboutSection.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+        });
+    }
+});
+
+// Add cursor pointer style
+if (scrollIndicator) {
+    scrollIndicator.style.cursor = 'pointer';
+}
+
+
+// ========================================
 // FORM SUBMISSION
 // ========================================
 const contactForm = document.getElementById('contact-form');

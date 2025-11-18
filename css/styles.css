@@ -318,6 +318,17 @@ body {
     left: 50%;
     transform: translateX(-50%);
     animation: bounce 2s infinite;
+    cursor: pointer; /* Add this */
+    transition: transform 0.3s ease; /* Add this */
+}
+
+/* Add hover effect */
+.scroll-indicator:hover {
+    transform: translateX(-50%) scale(1.1);
+}
+
+.scroll-indicator:hover .mouse {
+    border-color: var(--secondary-color);
 }
 
 .mouse {
@@ -858,3 +869,4 @@ section {
         grid-template-columns: 1fr;
     }
 }
+
