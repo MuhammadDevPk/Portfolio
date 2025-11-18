@@ -20,12 +20,13 @@ app.use(express.static(__dirname, {
   }
 }));
 
-// Configure nodemailer
+// Configure nodemailer with Mailtrap
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io',
+  port: process.env.MAILTRAP_PORT || 2525,
   auth: {
-    user: process.env.EMAIL_USER || 'your-email@gmail.com',
-    pass: process.env.EMAIL_PASS || 'your-app-password'
+    user: process.env.MAILTRAP_USER || 'your-mailtrap-username',
+    pass: process.env.MAILTRAP_PASS || 'your-mailtrap-password'
   }
 });
 
@@ -62,7 +63,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-// FIXED: Listen on 0.0.0.0 for Render
+// Listen on 0.0.0.0 for Render
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Portfolio server running on port ${PORT}`);
 });
