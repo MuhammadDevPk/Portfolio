@@ -31,7 +31,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // Contact form endpoint
-app.post('/send-email', async (req, res) => {
+app.post('/api/send-email', async (req, res) => {
   const { name, email, subject, message } = req.body;
 
   const mailOptions = {
